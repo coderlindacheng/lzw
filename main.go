@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"github.com/coderlindacheng/ldcutils/pair"
 )
 
 //func main() {
@@ -72,20 +73,21 @@ import (
 type sport struct {
 	name  string
 	sex   string
-	value *[]*float64
+	result []int
+	score []pair.IntPair
 }
 
 func readStandard() {
+	defer pause()
 	fileName := "评分标准.xlsx"
 	xlFile, err := xlsx.OpenFile(fileName)
 	if err != nil {
 		log.Panicf("读取评分标准表出错,请确认在改目录下存在%s,\n", fileName)
-		pause()
 	}
 	sheets := xlFile.Sheets
 	if len(sheets) != 1 {
 		log.Panicf("评分表只能有一个sheet\n")
-		pause()
+
 	}
 	for _, s := range xlFile.Sheets {
 		for _, r := range s.Rows {
