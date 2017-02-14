@@ -82,15 +82,16 @@ type sport struct {
 func readStandard() {
 	defer pause()
 	fileName := "评分标准.xlsx"
-	xlsx, err := .OpenFile(fileName)
+	xlsx, err := xlsx.OpenFile(fileName)
 	if err != nil {
 		log.Panicf("读取评分标准表出错,请确认在改目录下存在%s,\n", fileName)
 	}
-	if xlsx.SheetCount != 1 {
+	sheet:=xlsx.Sheets
+	if len(sheet) != 1 {
 		log.Panicf("评分表只能有一个sheet\n")
 
 	}
-	for _, s := range xlsx.GetSheetMap(){
+	for _, s := range sheet{
 		for _, r := range s.Rows {
 			row:=row{}
 			for i, c := range r.Cells {
