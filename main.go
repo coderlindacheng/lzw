@@ -1,7 +1,5 @@
 package main
 
-
-
 import (
 	"log"
 	"os"
@@ -11,7 +9,6 @@ import (
 	"github.com/coderlindacheng/balabalago/pair"
 	"github.com/tealeg/xlsx"
 )
-
 
 //func main() {
 //
@@ -73,8 +70,8 @@ import (
 //	reader.ReadLine()
 //}
 type sport struct {
-	name  string
-	sex   string
+	name   string
+	sex    string
 	result []int
 	score  []pair.IntPair
 }
@@ -84,36 +81,37 @@ func readStandard() {
 	fileName := "评分标准.xlsx"
 	xlsx, err := xlsx.OpenFile(fileName)
 	if err != nil {
-		log.Panicf("读取评分标准表出错,请确认在改目录下存在%s,\n", fileName)
+		log.Panicf("读取评分标准表出错,请确认在改目录下存在%s \n", fileName)
 	}
-	sheet:=xlsx.Sheets
-	if len(sheet) != 1 {
-		log.Panicf("评分表只能有一个sheet\n")
+	sheets := xlsx.Sheets
+	if len(sheets) != 1 {
+		log.Panicln("评分表只能有一个sheet \n")
 
 	}
-	for _, s := range sheet{
+	for _, s := range sheets {
 		for _, r := range s.Rows {
-			row:=row{}
 			for i, c := range r.Cells {
-				switch i {
-				case 0:
+				cString, _ := c.String()
+				if i == 0 && cString == "分值" {
 
 				}
+
 				var v float64
 				minute := strings.Split(c.Value, "\"")
-				mLen:=len(minute)
-				if mLen >2{
+				mLen := len(minute)
+				if mLen > 2 {
 					log.Panicf()
 					pause()
 				}
-				if > 1 {
-					v+=float64(minute) * 60 * 1000
-				}else {
+				if > 1
+				{
+					v += float64(minute) * 60 * 1000
+				} else {
 
-				}
-			}
-		}
-	}
+}
+}
+}
+}
 }
 
 func pause() {
