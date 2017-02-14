@@ -1,15 +1,17 @@
 package main
 
+
+
 import (
-	"github.com/tealeg/xlsx"
 	"log"
 	"os"
 	"bufio"
 	"fmt"
 	"strings"
-	"time"
-	"github.com/coderlindacheng/ldcutils/pair"
+	"github.com/coderlindacheng/balabalago/pair"
+	"github.com/tealeg/xlsx"
 )
+
 
 //func main() {
 //
@@ -74,22 +76,21 @@ type sport struct {
 	name  string
 	sex   string
 	result []int
-	score []pair.IntPair
+	score  []pair.IntPair
 }
 
 func readStandard() {
 	defer pause()
 	fileName := "评分标准.xlsx"
-	xlFile, err := xlsx.OpenFile(fileName)
+	xlsx, err := .OpenFile(fileName)
 	if err != nil {
 		log.Panicf("读取评分标准表出错,请确认在改目录下存在%s,\n", fileName)
 	}
-	sheets := xlFile.Sheets
-	if len(sheets) != 1 {
+	if xlsx.SheetCount != 1 {
 		log.Panicf("评分表只能有一个sheet\n")
 
 	}
-	for _, s := range xlFile.Sheets {
+	for _, s := range xlsx.GetSheetMap(){
 		for _, r := range s.Rows {
 			row:=row{}
 			for i, c := range r.Cells {
