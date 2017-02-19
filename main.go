@@ -8,6 +8,7 @@ import (
 	"strings"
 	"github.com/coderlindacheng/balabalago/pair"
 	"github.com/tealeg/xlsx"
+	"math"
 )
 
 //func main() {
@@ -69,54 +70,3 @@ import (
 //	fmt.Print("请按任意键退出")
 //	reader.ReadLine()
 //}
-type sport struct {
-	name   string
-	sex    string
-	result []int
-	score  []pair.IntPair
-}
-
-func readStandard() {
-	defer pause()
-	fileName := "评分标准.xlsx"
-	xlsx, err := xlsx.OpenFile(fileName)
-	if err != nil {
-		log.Panicf("读取评分标准表出错,请确认在改目录下存在%s \n", fileName)
-	}
-	sheets := xlsx.Sheets
-	if len(sheets) != 1 {
-		log.Panicln("评分表只能有一个sheet \n")
-
-	}
-	for _, s := range sheets {
-		for _, r := range s.Rows {
-			for i, c := range r.Cells {
-				cString, _ := c.String()
-				if i == 0 && cString == "分值" {
-
-				}
-
-				var v float64
-				minute := strings.Split(c.Value, "\"")
-				mLen := len(minute)
-				if mLen > 2 {
-					log.Panicf()
-					pause()
-				}
-				if > 1
-				{
-					v += float64(minute) * 60 * 1000
-				} else {
-
-}
-}
-}
-}
-}
-
-func pause() {
-	reader := bufio.NewReader(os.Stdin)
-	fmt.Println("请按任意键继续")
-	reader.ReadLine();
-	os.Exit(0)
-}
