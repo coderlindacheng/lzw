@@ -5,11 +5,11 @@ import (
 	"log"
 	"github.com/coderlindacheng/balabalago/pair"
 	"strings"
-	"github.com/coderlindacheng/balabalago/time"
+	. "github.com/coderlindacheng/balabalago/time"
 	"strconv"
-	"github.com/coderlindacheng/balabalago/special_string"
+	. "github.com/coderlindacheng/balabalago/special_string"
 	"fmt"
-	"github.com/coderlindacheng/balabalago/errors"
+	. "github.com/coderlindacheng/balabalago/errors"
 )
 
 const (
@@ -64,21 +64,20 @@ func defaultUnitTypePolicy(s string) (int, error) {
 func timeUnitTypePolicy(s string) (int, error) {
 
 	//2个index到最后一定要被查出来,所以不如一开始就查出来
-	minIndex := strings.Index(s, special_string.QUOTE)
-	secIndex := strings.Index(s, special_string.SINGLE_QUOTE)
+	minIndex := strings.Index(s, QUOTE)
+	secIndex := strings.Index(s, SINGLE_QUOTE)
 
 	//"和%s号都没有,默认解析成分钟
 	if minIndex == -1 && secIndex == -1 {
 		v, err := strconv.Atoi(s)
 		if err != nil {
-			errStr:=fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的分钟数是 %s 不是数字", FILE_NAME, special_string.QUOTE, special_string.SINGLE_QUOTE, s)
-			return 0, &errors.ErrorWrapper{&err, &errStr}
+			return 0, &ErrorWrapper{err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的分钟数是 %s 不是数字", FILE_NAME, QUOTE, SINGLE_QUOTE, s)}
 		}
-		return v * time.MILLIS_PER_MINUTE, nil
+		return v * MILLIS_PER_MINUTE, nil
 	}
 
 	if minIndex == 0 || secIndex == 0 {
-		return 0, &errors.ErrorWrapper{Attach: &(fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 %s和%s 不能出现在第一位", FILE_NAME, special_string.QUOTE, special_string.SINGLE_QUOTE, special_string.QUOTE, special_string.SINGLE_QUOTE))}
+		return 0, &ErrorWrapper{Attach: fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 %s和%s 不能出现在第一位", FILE_NAME, QUOTE, SINGLE_QUOTE, QUOTE, SINGLE_QUOTE)}
 	}
 
 	var minute int
@@ -90,32 +89,33 @@ func timeUnitTypePolicy(s string) (int, error) {
 		minuteStr := s[0:minIndex]
 		v, err := strconv.Atoi(minuteStr)
 		if err != nil {
-			return 0, &errors.ErrorWrapper{&err, &(fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的分钟数是 %s 不是数字", FILE_NAME, special_string.QUOTE, special_string.SINGLE_QUOTE, minuteStr))}
+			return 0, &ErrorWrapper{err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的分钟数是 %s 不是数字", FILE_NAME, QUOTE, SINGLE_QUOTE, minuteStr)}
 		}
-		minute = v * time.MILLIS_PER_MINUTE
+		minute = v * MILLIS_PER_MINUTE
 	}
 
 	//秒
 	if secIndex > 0 {
 		if minIndex > 0 {
 			if secIndex-minIndex <= 1 {
-				return 0, &errors.ErrorWrapper{Attach: &(fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 %s一定要出现在%s后面而且不能连续出现", FILE_NAME, special_string.QUOTE, special_string.SINGLE_QUOTE, special_string.SINGLE_QUOTE, special_string.QUOTE))}
+				errStr := fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 %s一定要出现在%s后面而且不能连续出现", FILE_NAME, QUOTE, SINGLE_QUOTE, SINGLE_QUOTE, QUOTE)
+				return 0, &ErrorWrapper{Attach: errStr}
 			}
 			secondStr := s[minIndex+1:secIndex]
 			v, err := strconv.Atoi(secondStr)
 			if err != nil {
-				return 0, &errors.ErrorWrapper{&err, &(fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的秒数是 %s 不是数字", FILE_NAME, special_string.QUOTE, special_string.SINGLE_QUOTE, secondStr))}
+				return 0, &ErrorWrapper{err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的秒数是 %s 不是数字", FILE_NAME, QUOTE, SINGLE_QUOTE, secondStr)}
 			}
 			second = v
 		} else {
 			secondStr := s[0:secIndex]
 			v, err := strconv.Atoi(secondStr)
 			if err != nil {
-				return 0, &errors.ErrorWrapper{&err, &(fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的秒数是 %s 不是数字", FILE_NAME, special_string.QUOTE, special_string.SINGLE_QUOTE, secondStr))}
+				return 0, &ErrorWrapper{err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的秒数是 %s 不是数字", FILE_NAME, QUOTE, SINGLE_QUOTE, secondStr)}
 			}
 			second = v
 		}
-		second = second * time.MILLIS_PER_SECOND
+		second = second * MILLIS_PER_SECOND
 	}
 
 	//毫秒
@@ -123,10 +123,10 @@ func timeUnitTypePolicy(s string) (int, error) {
 		millisStr := s[secIndex+1:length]
 		v, err := strconv.Atoi(millisStr)
 		if err != nil {
-			return 0, &errors.ErrorWrapper{&err, &(fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的毫秒数是 %s 不是数字", FILE_NAME, special_string.QUOTE, special_string.SINGLE_QUOTE, millisStr))}
+			return 0, &ErrorWrapper{err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的毫秒数是 %s 不是数字", FILE_NAME, QUOTE, SINGLE_QUOTE, millisStr)}
 		}
 		if millis >= 10 {
-			return 0, &errors.ErrorWrapper{Attach: &(fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的毫秒数不能大于9", FILE_NAME, special_string.QUOTE, special_string.SINGLE_QUOTE, millisStr))}
+			return 0, &ErrorWrapper{Attach: fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的毫秒数不能大于9", FILE_NAME, QUOTE, SINGLE_QUOTE, millisStr)}
 		}
 		millis = v * 100
 	}
@@ -141,14 +141,14 @@ func Read() func(i, j, k int, s *xlsx.Sheet, r *xlsx.Row, c *xlsx.Cell) error {
 		if j == 0 {
 			rowName, err := c.String()
 			if err != nil {
-				return &errors.ErrorWrapper{&err, &(fmt.Sprintf("%s 读取表头的时候出错了 读到%s err=%s", FILE_NAME, rowName, err))}
+				return &ErrorWrapper{err, fmt.Sprintf("%s 读取表头的时候出错了 读到%s err=%s", FILE_NAME, rowName, err)}
 			}
 			name, sex, policy, err := parseRowName(rowName)
 			if err != nil {
 				return err
 			}
 			if name != SCORE_ROW_NAME {
-				sport = &Sport{Name: name, Sex: sex, Policy: policy, Result: []int{}, Score: []pair.IntPair{}, UniqueKey: name + special_string.POUND_SIGN + sex}
+				sport = &Sport{Name: name, Sex: sex, Policy: policy, Result: []int{}, Score: []pair.IntPair{}, UniqueKey: name + POUND_SIGN + sex}
 			} else {
 				sport = nil
 			}
@@ -156,18 +156,21 @@ func Read() func(i, j, k int, s *xlsx.Sheet, r *xlsx.Row, c *xlsx.Cell) error {
 			if sport == nil {
 				cInt, err := c.Int()
 				if err != nil {
-					return &errors.ErrorWrapper{&err, &(fmt.Sprintf("%s 读取分值的时候出错了 err = %s", FILE_NAME, err))}
+					return &ErrorWrapper{err, fmt.Sprintf("%s 读取分值的时候出错了 err = %s", FILE_NAME, err)}
 				}
 				score = append(score, cInt)
 			} else {
 				cStr, err := c.String()
 				if err != nil {
-					return &errors.ErrorWrapper{&err, &(fmt.Sprintf("%s %s 读取数据的时候出错了 err = %s", FILE_NAME, sport.UniqueKey, err))}
+					return &ErrorWrapper{err, fmt.Sprintf("%s %s 读取数据的时候出错了 err = %s", FILE_NAME, sport.UniqueKey, err)}
 				}
 
-				v := sport.Policy(cStr)
+				v, err := sport.Policy(cStr)
+				sport.Result = append(sport.Result, v)
 			}
 		}
+
+		return nil
 	}
 }
 
@@ -182,13 +185,13 @@ func Read() func(i, j, k int, s *xlsx.Sheet, r *xlsx.Row, c *xlsx.Cell) error {
 		policy 该组的解析策略
  */
 func parseRowName(rowName string) (name string, sex string, policy UnitTypePolicy, err error) {
-	ss := strings.Split(rowName, special_string.POUND_SIGN)
+	ss := strings.Split(rowName, POUND_SIGN)
 	name = ss[0]
 	policy = defaultUnitTypePolicy
 	if length := len(ss); length > 1 {
 		sex = ss[1]
-		if sex != "" && sex != MALE && sex != FEMAL {
-			err = &errors.ErrorWrapper{&err, &(fmt.Sprintf("%s 组名的格式应该是 运动名称%s性别%s单位 而性别只能填 %s 或者 %s", FILE_NAME, special_string.POUND_SIGN, special_string.POUND_SIGN, MALE, FEMAL))}
+		if sex == "" || (sex != MALE && sex != FEMAL) {
+			err = &ErrorWrapper{Attach: fmt.Sprintf("%s 组名的格式应该是 运动名称%s性别%s单位 而性别只能填 %s 或者 %s 你填的却是 %s", FILE_NAME, POUND_SIGN, POUND_SIGN, MALE, FEMAL,sex)}
 			return
 		}
 		if length > 2 {
@@ -196,14 +199,14 @@ func parseRowName(rowName string) (name string, sex string, policy UnitTypePolic
 			case UNIT_TYPE_TIME:
 				policy = timeUnitTypePolicy
 			default:
-				//do nothing
+			//do nothing
 			}
 
 		}
 
 	}
 	if name == "" {
-		err = &errors.ErrorWrapper{Attach: &(fmt.Sprintf("%s 有一个组名是空的", FILE_NAME))}
+		err = &ErrorWrapper{Attach: fmt.Sprintf("%s 有一个组名是空的", FILE_NAME)}
 		return
 	}
 

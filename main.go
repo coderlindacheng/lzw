@@ -66,7 +66,27 @@ import (
 //		fmt.Println(maxScore - (inputTime - minTime) / ((maxTime - minTime) / (maxScore - minScored)))
 //	} else {
 //		fmt.Println("你输入的数据不在可以计算的范围内")
-//	}
+//	}yi g
 //	fmt.Print("请按任意键退出")
 //	reader.ReadLine()
 //}
+type A struct {
+	i int
+	j int
+	k int
+}
+
+func main() {
+	var a A = A{}
+	var b A = A{}
+	passingValue(a) //这个执行效率是不是比下面的高?
+	passingPointer(&b)
+}
+
+func passingValue(i A)  {
+	//do something
+}
+
+func passingPointer(i *A)  {
+	//do something
+}

@@ -2,72 +2,79 @@ package standar
 
 import (
 	"testing"
-	"github.com/coderlindacheng/balabalago/time"
-	"github.com/coderlindacheng/balabalago/special_string"
+	. "github.com/coderlindacheng/balabalago/time"
+	. "github.com/coderlindacheng/balabalago/special_string"
+	. "gopkg.in/check.v1"
 )
 
-func checkUnitTypePolicySuccessed(testStr *string, wanted *int, t *testing.T) {
-	result, err := timeUnitTypePolicy(*testStr)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if *wanted != result {
-		t.Fatalf("想要的结果是 %s 得到的结果是 %s", wanted, result)
-	}
-}
+func Test(t *testing.T) { TestingT(t) }
+
+type MySuite struct{}
+
+var _ = Suite(&MySuite{})
 
 /*
 	成功测试
  */
-func TestTimeUnitTypePolicySuccessed(t *testing.T) {
-
-	checkUnitTypePolicySuccessed(&"1", &time.MILLIS_PER_MINUTE, t)
-
-	checkUnitTypePolicySuccessed(&"1\"", &time.MILLIS_PER_MINUTE, t)
-
-	checkUnitTypePolicySuccessed(&"1\"30'", &(time.MILLIS_PER_MINUTE + time.MILLIS_PER_SECOND*30), t)
-
-	checkUnitTypePolicySuccessed(&"30'3", &(time.MILLIS_PER_SECOND*30 + 3*100), t)
-
-	checkUnitTypePolicySuccessed(&"30'", &(time.MILLIS_PER_SECOND * 30), t)
-
-	checkUnitTypePolicySuccessed(&"1\"30'2", &(time.MILLIS_PER_MINUTE + time.MILLIS_PER_SECOND*30 + 2*100), t)
-}
-
-func checkUnitTypePolicyFailed(testStr *string, t *testing.T) {
-	if _, err := timeUnitTypePolicy(*testStr); err == nil {
-		t.Fatalf("%s 这个字符格式是必定不能通过测试的", *testStr)
+func (s *MySuite) TestTimeUnitTypePolicySucceed(c *C) {
+	processor := func(testStr string, wanted int) {
+		result, err := timeUnitTypePolicy(testStr)
+		c.Assert(err, IsNil)
+		c.Assert(result, Equals, wanted)
 	}
+	processor("1", MILLIS_PER_MINUTE)
+
+	processor("1\"", MILLIS_PER_MINUTE)
+
+	processor("1\"30'", MILLIS_PER_MINUTE+MILLIS_PER_SECOND*30)
+
+	processor("30'3", MILLIS_PER_SECOND*30+3*100)
+
+	processor("30'", MILLIS_PER_SECOND*30)
+
+	processor("1\"30'2", MILLIS_PER_MINUTE+MILLIS_PER_SECOND*30+2*100)
 }
 
 /*
 	失败测试
  */
-func TestTimeUnitTypePolicyFailed(t *testing.T) {
-	checkUnitTypePolicyFailed(&special_string.SINGLE_QUOTE, t)
-	checkUnitTypePolicyFailed(&special_string.QUOTE, t)
-	checkUnitTypePolicyFailed(&(special_string.QUOTE + special_string.SINGLE_QUOTE), t)
-	checkUnitTypePolicyFailed(&(special_string.SINGLE_QUOTE + special_string.QUOTE), t)
-	checkUnitTypePolicyFailed(&"1'30'2\"", t)
+func (s *MySuite) TestTimeUnitTypePolicyFailed(c *C) {
+	processor := func(s string) {
+		_, err := timeUnitTypePolicy(s)
+		c.Assert(err, NotNil)
+		var e error
+		c.Assert(err, Implements, &e)
+	}
+	processor(SINGLE_QUOTE)
+	processor(QUOTE)
+	processor(QUOTE + SINGLE_QUOTE)
+	processor(SINGLE_QUOTE + QUOTE)
+	processor("1'30'2\"")
 }
 
-func TestParseRowName(t *testing.T) {
+func (s *MySuite) TestParseRowNameSucceed(c *C) {
 	rowName := "长跑#男#时间"
 	name, sex, policy, err := parseRowName(rowName)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if name != "长跑" || sex != "男" {
-		t.Fatal("组名解析错误")
-	}
+	c.Assert(err, IsNil)
+	c.Assert(name, Equals, "长跑")
+	c.Assert(sex, Equals, "男")
 
 	testStr := "1\"30'2"
-	wanted := time.MILLIS_PER_MINUTE + time.MILLIS_PER_SECOND*30 + 2*100
-	result, err := policy(testStr);
-	if err != nil {
-		t.Fatal(err)
+	wanted := MILLIS_PER_MINUTE + MILLIS_PER_SECOND*30 + 2*100
+	result, err := policy(testStr)
+	c.Assert(err, IsNil)
+	c.Assert(result, Equals, wanted)
+
+}
+
+func (s *MySuite) TestParseRowNameFailed(c *C) {
+	processor := func(s string) {
+		_, _, _, err := parseRowName(s)
+		c.Assert(err, NotNil)
 	}
-	if wanted != result {
-		t.Fatalf("想要的结果是 %s 得到的结果是 %s", wanted, result)
-	}
+	processor("长跑##时间")
+	processor("#长跑时间")
+	processor("#长跑#时间")
+	processor("#长跑#时间#")
+	processor("长跑时间#")
 }
