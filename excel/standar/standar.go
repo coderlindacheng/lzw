@@ -9,7 +9,7 @@ import (
 	"strconv"
 	. "github.com/coderlindacheng/balabalago/special_string"
 	"fmt"
-	. "github.com/coderlindacheng/balabalago/errors"
+	"github.com/coderlindacheng/balabalago/errors"
 )
 
 const (
@@ -71,13 +71,13 @@ func timeUnitTypePolicy(s string) (int, error) {
 	if minIndex == -1 && secIndex == -1 {
 		v, err := strconv.Atoi(s)
 		if err != nil {
-			return 0, &ErrorWrapper{err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的分钟数是 %s 不是数字", FILE_NAME, QUOTE, SINGLE_QUOTE, s)}
+			return 0, errors.NewWrapper(err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的分钟数是 %s 不是数字", FILE_NAME, QUOTE, SINGLE_QUOTE, s))
 		}
 		return v * MILLIS_PER_MINUTE, nil
 	}
 
 	if minIndex == 0 || secIndex == 0 {
-		return 0, &ErrorWrapper{Attach: fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 %s和%s 不能出现在第一位", FILE_NAME, QUOTE, SINGLE_QUOTE, QUOTE, SINGLE_QUOTE)}
+		return 0, errors.NewOnlyStr(fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 %s和%s 不能出现在第一位", FILE_NAME, QUOTE, SINGLE_QUOTE, QUOTE, SINGLE_QUOTE))
 	}
 
 	var minute int
@@ -89,7 +89,7 @@ func timeUnitTypePolicy(s string) (int, error) {
 		minuteStr := s[0:minIndex]
 		v, err := strconv.Atoi(minuteStr)
 		if err != nil {
-			return 0, &ErrorWrapper{err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的分钟数是 %s 不是数字", FILE_NAME, QUOTE, SINGLE_QUOTE, minuteStr)}
+			return 0, errors.NewWrapper(err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的分钟数是 %s 不是数字", FILE_NAME, QUOTE, SINGLE_QUOTE, minuteStr))
 		}
 		minute = v * MILLIS_PER_MINUTE
 	}
@@ -98,20 +98,19 @@ func timeUnitTypePolicy(s string) (int, error) {
 	if secIndex > 0 {
 		if minIndex > 0 {
 			if secIndex-minIndex <= 1 {
-				errStr := fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 %s一定要出现在%s后面而且不能连续出现", FILE_NAME, QUOTE, SINGLE_QUOTE, SINGLE_QUOTE, QUOTE)
-				return 0, &ErrorWrapper{Attach: errStr}
+				return 0, errors.NewOnlyStr(fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 %s一定要出现在%s后面而且不能连续出现", FILE_NAME, QUOTE, SINGLE_QUOTE, SINGLE_QUOTE, QUOTE))
 			}
 			secondStr := s[minIndex+1:secIndex]
 			v, err := strconv.Atoi(secondStr)
 			if err != nil {
-				return 0, &ErrorWrapper{err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的秒数是 %s 不是数字", FILE_NAME, QUOTE, SINGLE_QUOTE, secondStr)}
+				return 0, errors.NewWrapper(err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的秒数是 %s 不是数字", FILE_NAME, QUOTE, SINGLE_QUOTE, secondStr))
 			}
 			second = v
 		} else {
 			secondStr := s[0:secIndex]
 			v, err := strconv.Atoi(secondStr)
 			if err != nil {
-				return 0, &ErrorWrapper{err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的秒数是 %s 不是数字", FILE_NAME, QUOTE, SINGLE_QUOTE, secondStr)}
+				return 0, errors.NewWrapper(err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的秒数是 %s 不是数字", FILE_NAME, QUOTE, SINGLE_QUOTE, secondStr))
 			}
 			second = v
 		}
@@ -123,10 +122,10 @@ func timeUnitTypePolicy(s string) (int, error) {
 		millisStr := s[secIndex+1:length]
 		v, err := strconv.Atoi(millisStr)
 		if err != nil {
-			return 0, &ErrorWrapper{err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的毫秒数是 %s 不是数字", FILE_NAME, QUOTE, SINGLE_QUOTE, millisStr)}
+			return 0, errors.NewWrapper(err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的毫秒数是 %s 不是数字", FILE_NAME, QUOTE, SINGLE_QUOTE, millisStr))
 		}
 		if millis >= 10 {
-			return 0, &ErrorWrapper{Attach: fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的毫秒数不能大于9", FILE_NAME, QUOTE, SINGLE_QUOTE, millisStr)}
+			return 0, errors.NewWrapper(err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的毫秒数不能大于9", FILE_NAME, QUOTE, SINGLE_QUOTE, millisStr))
 		}
 		millis = v * 100
 	}
@@ -141,7 +140,7 @@ func Read() func(i, j, k int, s *xlsx.Sheet, r *xlsx.Row, c *xlsx.Cell) error {
 		if j == 0 {
 			rowName, err := c.String()
 			if err != nil {
-				return &ErrorWrapper{err, fmt.Sprintf("%s 读取表头的时候出错了 读到%s err=%s", FILE_NAME, rowName, err)}
+				return errors.NewWrapper(err, fmt.Sprintf("%s 读取表头的时候出错了 读到%s err=%s", FILE_NAME, rowName, err))
 			}
 			name, sex, policy, err := parseRowName(rowName)
 			if err != nil {
@@ -156,13 +155,13 @@ func Read() func(i, j, k int, s *xlsx.Sheet, r *xlsx.Row, c *xlsx.Cell) error {
 			if sport == nil {
 				cInt, err := c.Int()
 				if err != nil {
-					return &ErrorWrapper{err, fmt.Sprintf("%s 读取分值的时候出错了 err = %s", FILE_NAME, err)}
+					return errors.NewWrapper(err, fmt.Sprintf("%s 读取分值的时候出错了 err = %s", FILE_NAME, err))
 				}
 				score = append(score, cInt)
 			} else {
 				cStr, err := c.String()
 				if err != nil {
-					return &ErrorWrapper{err, fmt.Sprintf("%s %s 读取数据的时候出错了 err = %s", FILE_NAME, sport.UniqueKey, err)}
+					return errors.NewWrapper(err, fmt.Sprintf("%s %s 读取数据的时候出错了 err = %s", FILE_NAME, sport.UniqueKey, err))
 				}
 
 				v, err := sport.Policy(cStr)
@@ -191,7 +190,7 @@ func parseRowName(rowName string) (name string, sex string, policy UnitTypePolic
 	if length := len(ss); length > 1 {
 		sex = ss[1]
 		if sex == "" || (sex != MALE && sex != FEMAL) {
-			err = &ErrorWrapper{Attach: fmt.Sprintf("%s 组名的格式应该是 运动名称%s性别%s单位 而性别只能填 %s 或者 %s 你填的却是 %s", FILE_NAME, POUND_SIGN, POUND_SIGN, MALE, FEMAL,sex)}
+			err = errors.NewOnlyStr(fmt.Sprintf("%s 组名的格式应该是 运动名称%s性别%s单位 而性别只能填 %s 或者 %s 你填的却是 %s", FILE_NAME, POUND_SIGN, POUND_SIGN, MALE, FEMAL, sex))
 			return
 		}
 		if length > 2 {
@@ -206,7 +205,7 @@ func parseRowName(rowName string) (name string, sex string, policy UnitTypePolic
 
 	}
 	if name == "" {
-		err = &ErrorWrapper{Attach: fmt.Sprintf("%s 有一个组名是空的", FILE_NAME)}
+		err = errors.NewOnlyStr(fmt.Sprintf("%s 有一个组名是空的", FILE_NAME))
 		return
 	}
 
