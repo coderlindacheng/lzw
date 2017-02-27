@@ -2,14 +2,11 @@ package standar
 
 import (
 	"github.com/tealeg/xlsx"
-	"log"
-	"github.com/coderlindacheng/balabalago/pair"
 	"strings"
-	. "github.com/coderlindacheng/balabalago/time"
-	"strconv"
 	. "github.com/coderlindacheng/balabalago/special_string"
 	"fmt"
 	"github.com/coderlindacheng/balabalago/errors"
+	. "github.com/coderlindacheng/balabalago/types"
 )
 
 const (
@@ -21,17 +18,16 @@ const (
 	SCORE_ROW_NAME = "分值" //评分标准表的字段名,一定要有这个字段,而且要特殊处理的
 
 	UNIT_TYPE_TIME = "时间" //单位类型 时间
+
+	SCORT_DENOMINATOR = 1000000 //分数的先扩大,再缩小的倍数,最多只有100分,所以多点0,最后算出来的结果精确点
 )
 
-type UnitTypePolicy func(s string) (int, error)
-
 type Sport struct {
-	Name      string
-	Sex       string
-	Policy    UnitTypePolicy
-	Result    []int
-	Score     []pair.IntPair
-	UniqueKey string
+	Name            string
+	Sex             string
+	Policy          UnitTypePolicy
+	ScoreTranslator []TripleInt
+	UniqueKey       string
 }
 
 var Sports map[string]Sport = map[string]Sport{}
@@ -44,110 +40,23 @@ var Sports map[string]Sport = map[string]Sport{}
 	return :
 		int 解析后的值得
  */
-func defaultUnitTypePolicy(s string) (int, error) {
-	v, err := strconv.Atoi(s)
-	if err != nil {
-		log.Printf("%s 你填的是 %s 不是数字", FILE_NAME, s)
-		return 0, err
-	}
-	return v, nil
-}
 
-/*
-	以时间为单位的解析策略,最大到分钟,最小号毫秒,把输入的时间格式解析成毫秒
-
-	parma:
-	 	时间格式 , 分"秒%s毫秒x100
-	return :
-		int 解析后的毫秒值
- */
-func timeUnitTypePolicy(s string) (int, error) {
-
-	//2个index到最后一定要被查出来,所以不如一开始就查出来
-	minIndex := strings.Index(s, QUOTE)
-	secIndex := strings.Index(s, SINGLE_QUOTE)
-
-	//"和%s号都没有,默认解析成分钟
-	if minIndex == -1 && secIndex == -1 {
-		v, err := strconv.Atoi(s)
-		if err != nil {
-			return 0, errors.NewWrapper(err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的分钟数是 %s 不是数字", FILE_NAME, QUOTE, SINGLE_QUOTE, s))
-		}
-		return v * MILLIS_PER_MINUTE, nil
-	}
-
-	if minIndex == 0 || secIndex == 0 {
-		return 0, errors.NewOnlyStr(fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 %s和%s 不能出现在第一位", FILE_NAME, QUOTE, SINGLE_QUOTE, QUOTE, SINGLE_QUOTE))
-	}
-
-	var minute int
-	var second int
-	var millis int
-
-	//分
-	if minIndex > 0 {
-		minuteStr := s[0:minIndex]
-		v, err := strconv.Atoi(minuteStr)
-		if err != nil {
-			return 0, errors.NewWrapper(err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的分钟数是 %s 不是数字", FILE_NAME, QUOTE, SINGLE_QUOTE, minuteStr))
-		}
-		minute = v * MILLIS_PER_MINUTE
-	}
-
-	//秒
-	if secIndex > 0 {
-		if minIndex > 0 {
-			if secIndex-minIndex <= 1 {
-				return 0, errors.NewOnlyStr(fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 %s一定要出现在%s后面而且不能连续出现", FILE_NAME, QUOTE, SINGLE_QUOTE, SINGLE_QUOTE, QUOTE))
-			}
-			secondStr := s[minIndex+1:secIndex]
-			v, err := strconv.Atoi(secondStr)
-			if err != nil {
-				return 0, errors.NewWrapper(err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的秒数是 %s 不是数字", FILE_NAME, QUOTE, SINGLE_QUOTE, secondStr))
-			}
-			second = v
-		} else {
-			secondStr := s[0:secIndex]
-			v, err := strconv.Atoi(secondStr)
-			if err != nil {
-				return 0, errors.NewWrapper(err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的秒数是 %s 不是数字", FILE_NAME, QUOTE, SINGLE_QUOTE, secondStr))
-			}
-			second = v
-		}
-		second = second * MILLIS_PER_SECOND
-	}
-
-	//毫秒
-	if length := len(s); secIndex > 0 && secIndex < length-1 {
-		millisStr := s[secIndex+1:length]
-		v, err := strconv.Atoi(millisStr)
-		if err != nil {
-			return 0, errors.NewWrapper(err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的毫秒数是 %s 不是数字", FILE_NAME, QUOTE, SINGLE_QUOTE, millisStr))
-		}
-		if millis >= 10 {
-			return 0, errors.NewWrapper(err, fmt.Sprintf("%s 时间格式解析有误 时间格式应该为 分%s秒%s毫秒x100 你填的毫秒数不能大于9", FILE_NAME, QUOTE, SINGLE_QUOTE, millisStr))
-		}
-		millis = v * 100
-	}
-
-	return minute + second + millis, nil
-}
-
-func Read() func(i, j, k int, s *xlsx.Sheet, r *xlsx.Row, c *xlsx.Cell) error {
-	score := []int{}
+func Read(maxCellsCount int) func(rowNum, cellNum, maxCellsCount int, s *xlsx.Sheet, r *xlsx.Row, c *xlsx.Cell) error {
+	score := make([]int, maxCellsCount)
+	result := make([]int, maxCellsCount)
 	var sport *Sport
-	return func(i, j, k int, s *xlsx.Sheet, r *xlsx.Row, c *xlsx.Cell) error {
-		if j == 0 {
+	return func(rowNum, cellNum, maxCellsCount int, s *xlsx.Sheet, r *xlsx.Row, c *xlsx.Cell) error {
+		if rowNum == 0 {
 			rowName, err := c.String()
 			if err != nil {
-				return errors.NewWrapper(err, fmt.Sprintf("%s 读取表头的时候出错了 读到%s err=%s", FILE_NAME, rowName, err))
+				return errors.NewWrapper(err, fmt.Sprintf("%s 读取表头的时候出错了 读到%s", FILE_NAME, rowName))
 			}
 			name, sex, policy, err := parseRowName(rowName)
 			if err != nil {
 				return err
 			}
 			if name != SCORE_ROW_NAME {
-				sport = &Sport{Name: name, Sex: sex, Policy: policy, Result: []int{}, Score: []pair.IntPair{}, UniqueKey: name + POUND_SIGN + sex}
+				sport = &Sport{Name: name, Sex: sex, Policy: policy, ScoreTranslator: make([]TripleInt, maxCellsCount), UniqueKey: name + POUND_SIGN + sex}
 			} else {
 				sport = nil
 			}
@@ -155,20 +64,37 @@ func Read() func(i, j, k int, s *xlsx.Sheet, r *xlsx.Row, c *xlsx.Cell) error {
 			if sport == nil {
 				cInt, err := c.Int()
 				if err != nil {
-					return errors.NewWrapper(err, fmt.Sprintf("%s 读取分值的时候出错了 err = %s", FILE_NAME, err))
+					return errors.NewWrapper(err, fmt.Sprintf("%s 读取分值的时候出错了", FILE_NAME))
 				}
-				score = append(score, cInt)
+				score[cellNum] = cInt * SCORT_DENOMINATOR
 			} else {
 				cStr, err := c.String()
 				if err != nil {
-					return errors.NewWrapper(err, fmt.Sprintf("%s %s 读取数据的时候出错了 err = %s", FILE_NAME, sport.UniqueKey, err))
+					return errors.NewWrapper(err, fmt.Sprintf("%s %s 读取数据的时候出错了", FILE_NAME, sport.UniqueKey))
 				}
 
 				v, err := sport.Policy(cStr)
-				sport.Result = append(sport.Result, v)
+				if err != nil {
+					return err
+				}
+
+				result[cellNum] = v
 			}
 		}
 
+		if cellNum == maxCellsCount {
+			sport.ScoreTranslator[maxCellsCount] = TripleInt{score[maxCellsCount], result[maxCellsCount], 0}
+			for i := maxCellsCount; i > 0; i-- {
+				currentScore := score[i]
+				currentResult := result[i]
+				nextIndex := i - 1
+				dscore := currentScore - score[nextIndex]
+				dresule := currentResult - result[nextIndex]
+				perSR := dscore / dresule
+				sport.ScoreTranslator[nextIndex] = TripleInt{score[nextIndex], result[nextIndex], perSR}
+			}
+			Sports[sport.UniqueKey] = *sport
+		}
 		return nil
 	}
 }
