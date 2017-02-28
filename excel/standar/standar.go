@@ -8,6 +8,7 @@ import (
 	"github.com/coderlindacheng/balabalago/errors"
 	. "github.com/coderlindacheng/balabalago/types"
 	"github.com/coderlindacheng/lzw/excel/common"
+	"strconv"
 )
 
 const (
@@ -34,9 +35,51 @@ type Sport struct {
 	Name            string
 	Sex             string
 	Policy          UnitTypePolicy
-	ScoreTranslator []TripleInt
+	ScoreTranslator []TripleInt //left:底分 mid:输入 right:没一点数值的分差 (第一个是100分哦)
 	UniqueKey       string
 	sorting         int
+}
+
+func (p *Sport) OutPut(fileName, s string, rowNum, cellNum int) (string, error) {
+	v, err := p.Policy(fileName, s)
+	if err != nil {
+		return s, err
+	}
+	if p.sorting == ASC_SORTING {
+		for _, tripleInt := range p.ScoreTranslator {
+
+			if v <= tripleInt.Mid() {
+				dv := tripleInt.Mid() - v
+				var finalScore int
+				if dv > 0 {
+					finalScore = tripleInt.Left() + dv*tripleInt.Right()
+				} else if dv == 0 {
+					finalScore = tripleInt.Left()
+				} else {
+					return s, errors.NewOnlyStr(fmt.Sprintf("%s 第%v行第%v列 出现了一些奇怪的问题", fileName, rowNum, cellNum))
+				}
+				return strconv.FormatFloat(float64(finalScore)/SCORT_DENOMINATOR, 'f', 2, 32), nil
+			}
+		}
+	} else {
+		for _, tripleInt := range p.ScoreTranslator {
+			if v >= tripleInt.Mid() {
+				dv := v - tripleInt.Mid()
+				var finalScore int
+				if dv > 0 {
+					finalScore = tripleInt.Left() + dv*tripleInt.Right()
+				} else if dv == 0 {
+					finalScore = tripleInt.Left()
+				} else {
+					return s, errors.NewOnlyStr(fmt.Sprintf("%s 第%v行第%v列 出现了一些奇怪的问题", fileName, rowNum, cellNum))
+				}
+				return strconv.FormatFloat(float64(finalScore)/SCORT_DENOMINATOR, 'f', 2, 32), nil
+			}
+		}
+
+	}
+
+	return s, errors.NewOnlyStr(fmt.Sprintf("%s 第%v行第%v列 出现了一些奇怪的问题", fileName, rowNum, cellNum))
 }
 
 var Sports map[string]Sport = map[string]Sport{}
