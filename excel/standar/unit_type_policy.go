@@ -96,6 +96,14 @@ func timeUnitTypePolicy(fileName, s string) (int, error) {
 		}
 		millis = v * 100
 	}
-
+	if minute >= 60*MILLIS_PER_MINUTE {
+		return 0, errors.NewOnlyStr(fmt.Sprintf("%s 以时间为单位的数据分钟是不能大于或者等于60的", fileName))
+	}
+	if second >= 60*MILLIS_PER_SECOND {
+		return 0, errors.NewOnlyStr(fmt.Sprintf("%s 以时间为单位的数据秒数是不能大于或者等于60的", fileName))
+	}
+	if millis >= MILLIS_PER_SECOND {
+		return 0, errors.NewOnlyStr(fmt.Sprintf("%s 以时间为单位的数据毫秒数字是不能大于或者等于10", fileName))
+	}
 	return minute + second + millis, nil
 }
