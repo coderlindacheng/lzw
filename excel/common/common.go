@@ -23,31 +23,27 @@ import (
 //	return minCellsCount
 //}
 
-type ReadSheetFunc func(rowNum, cellNum int, s *xlsx.Sheet, r *xlsx.Row, c *xlsx.Cell) error
+type ReadSheetFunc func(sheetNum, rowNum, cellNum int, s *xlsx.Sheet, r *xlsx.Row, c *xlsx.Cell) error
 
 func ReadSheet(fileName string, readfunc func(fileName string) (ReadSheetFunc, error)) error {
+
+	//if _, err := os.Stat(fileName); err != nil && os.IsNotExist(err) {
+	//	return errors.NewWrapper(err, fmt.Sprintf(fmt.Sprintf("%s 文件不存在", fileName)))
+	//}
 	xlsx, err := xlsx.OpenFile(fileName)
 	if err != nil {
 		return errors.NewWrapper(err, fmt.Sprintf("读取评分标准表出错,请确认在该目录下存在 %s", fileName))
 	}
 	sheets := xlsx.Sheets
 	//maxRow := CalMaxCellsCount(sheets)
-
-	for i, s := range sheets {
-		//只读取第一个表
-		if i > 0 {
-			break
-		}
-		var realReadFunc ReadSheetFunc
+	realReadFunc, err := readfunc(fileName)
+	if err != nil {
+		return err
+	}
+	for sheetNum, s := range sheets {
 		for rowNum, r := range s.Rows {
-			if realReadFunc == nil {
-				realReadFunc, err = readfunc(fileName)
-				if err != nil {
-					return err
-				}
-			}
 			for cellNum, c := range r.Cells {
-				err := realReadFunc(rowNum, cellNum, s, r, c)
+				err := realReadFunc(sheetNum, rowNum, cellNum, s, r, c)
 				if err != nil {
 					return err
 				}

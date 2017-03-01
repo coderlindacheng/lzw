@@ -40,40 +40,34 @@ type Sport struct {
 	sorting         int
 }
 
-func (p *Sport) OutPut(fileName, s string, rowNum, cellNum int) (string, error) {
-	v, err := p.Policy(fileName, s)
+func (p *Sport) OutPut(fileName, s string, sheetNum, rowNum, cellNum int) (string, error) {
+	v, err := p.Policy(fileName, s, sheetNum, rowNum, cellNum)
 	if err != nil {
 		return s, err
 	}
+
+	f := func(tripleInt TripleInt, dv int) (string, error) {
+		var finalScore int
+		if dv > 0 {
+			finalScore = tripleInt.Left() + dv*tripleInt.Right()
+		} else if dv == 0 {
+			finalScore = tripleInt.Left()
+		} else {
+			return s, errors.NewOnlyStr(fmt.Sprintf("%s 第%v行第%v列 出现了一些奇怪的问题", fileName, rowNum, cellNum))
+		}
+		return strconv.FormatFloat(float64(finalScore)/SCORT_DENOMINATOR, 'f', 2, 32), nil
+	}
+
 	if p.sorting == ASC_SORTING {
 		for _, tripleInt := range p.ScoreTranslator {
-
 			if v <= tripleInt.Mid() {
-				dv := tripleInt.Mid() - v
-				var finalScore int
-				if dv > 0 {
-					finalScore = tripleInt.Left() + dv*tripleInt.Right()
-				} else if dv == 0 {
-					finalScore = tripleInt.Left()
-				} else {
-					return s, errors.NewOnlyStr(fmt.Sprintf("%s 第%v行第%v列 出现了一些奇怪的问题", fileName, rowNum, cellNum))
-				}
-				return strconv.FormatFloat(float64(finalScore)/SCORT_DENOMINATOR, 'f', 2, 32), nil
+				return f(tripleInt, tripleInt.Mid()-v)
 			}
 		}
 	} else {
 		for _, tripleInt := range p.ScoreTranslator {
 			if v >= tripleInt.Mid() {
-				dv := v - tripleInt.Mid()
-				var finalScore int
-				if dv > 0 {
-					finalScore = tripleInt.Left() + dv*tripleInt.Right()
-				} else if dv == 0 {
-					finalScore = tripleInt.Left()
-				} else {
-					return s, errors.NewOnlyStr(fmt.Sprintf("%s 第%v行第%v列 出现了一些奇怪的问题", fileName, rowNum, cellNum))
-				}
-				return strconv.FormatFloat(float64(finalScore)/SCORT_DENOMINATOR, 'f', 2, 32), nil
+				return f(tripleInt, v-tripleInt.Mid())
 			}
 		}
 
@@ -93,14 +87,18 @@ var Sports map[string]Sport = map[string]Sport{}
 		int 解析后的值得
  */
 
-func Read(fileName string, ) (f common.ReadSheetFunc, err error) {
+func Read(fileName string) (f common.ReadSheetFunc, err error) {
 	var realMaxRow int
 	var score []int
 	var dscore []int
 	var results [][]int
 	var sports []*Sport
 	var maxCell int
-	f = func(rowNum, cellNum int, s *xlsx.Sheet, r *xlsx.Row, c *xlsx.Cell) error {
+	f = func(sheetNum, rowNum, cellNum int, s *xlsx.Sheet, r *xlsx.Row, c *xlsx.Cell) error {
+		if sheetNum > 1 {
+			return errors.NewOnlyStr(fmt.Sprintf("%s 只读一个sheet", fileName))
+		}
+
 		if rowNum == 0 {
 			if sports == nil {
 				maxRow := s.MaxRow
@@ -144,7 +142,7 @@ func Read(fileName string, ) (f common.ReadSheetFunc, err error) {
 					return errors.NewWrapper(err, fmt.Sprintf("%s %s 读取数据的时候出错了", fileName, sport.UniqueKey))
 				}
 
-				v, err := sport.Policy(fileName, cStr)
+				v, err := sport.Policy(fileName, cStr, sheetNum, rowNum, cellNum)
 				if err != nil {
 					return err
 				}

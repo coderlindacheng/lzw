@@ -7,20 +7,31 @@ import (
 	"github.com/coderlindacheng/balabalago/errors"
 	"github.com/coderlindacheng/balabalago/special_string"
 	"github.com/coderlindacheng/lzw/excel/standar"
+	"github.com/coderlindacheng/balabalago/types"
+	"strconv"
 )
 
-const SEX_MARK = "性别"
+const (
+	SEX_MARK        = "性别"
+	INPUT_FILE_NAME = "./原始表.xlsx"
+	SHEET_PREFIX    = "工作表"
+)
 
-func Read(fileName string, ) (f common.ReadSheetFunc, err error) {
+var Datas []*types.Pair = make([]*types.Pair, 0, 20) //随便定义一个默认值
+var sheetNameMap map[string]string = map[string]string{}
+
+func Read(fileName string) (f common.ReadSheetFunc, err error) {
 	var recores [][]string
 	var rowNames []string
 	var maxRow int
 	var maxCell int
 	var current []string
 	var sex string
-	f = func(rowNum, cellNum int, s *xlsx.Sheet, r *xlsx.Row, c *xlsx.Cell) error {
+	var currentSheetNum int
+
+	f = func(sheetNum, rowNum, cellNum int, s *xlsx.Sheet, r *xlsx.Row, c *xlsx.Cell) error {
 		if rowNum == 0 {
-			if recores == nil {
+			if recores == nil || currentSheetNum != sheetNum {
 				sex = ""
 				maxRow = s.MaxRow
 				maxCell = len(r.Cells)
@@ -31,6 +42,7 @@ func Read(fileName string, ) (f common.ReadSheetFunc, err error) {
 					recores[i] = make([]string, maxCell)
 				}
 				rowNames = recores[0]
+				currentSheetNum = sheetNum
 			}
 
 			s, err := c.String()
@@ -55,21 +67,32 @@ func Read(fileName string, ) (f common.ReadSheetFunc, err error) {
 			if err != nil {
 				return errors.NewWrapper(err, fmt.Sprintf("%s 读取数据时出错了 读到的是 %s ", fileName, s))
 			}
-			if sex != "" {
-				key := rowName + special_string.POUND_SIGN + sex
-				sprot, ok := standar.Sports[key]
-				if ok {
-					v,err:=sprot.Policy(fileName,s)
 
-				} else {
-					return errors.NewWrapper(err, fmt.Sprintf("%s 读取数据时出错了  %v 在 %s 中读不到数据", fileName, current, rowName))
+			key := rowName + special_string.POUND_SIGN + sex
+			sprot, ok := standar.Sports[key]
+			if ok {
+				outPutStr, err := sprot.OutPut(fileName, s, sheetNum, rowNum, cellNum)
+				if err != nil {
+					return err
 				}
+				current[cellNum] = outPutStr
 			} else {
-				if rowName == SEX_MARK {
-					sex = s
-				}
+				current[cellNum] = s
 			}
-			current[cellNum] = s
+
+			if rowName == SEX_MARK && sex == "" {
+				sex = s
+			}
+
+		}
+
+		if rowNum == maxRow-1 && cellNum == maxCell-1 {
+			sheetName := s.Name
+			if _, exist := sheetNameMap[sheetName]; exist {
+				sheetName = SHEET_PREFIX + special_string.SPACE + strconv.Itoa(len(sheetNameMap))
+			}
+			sheetNameMap[sheetName] = sheetName
+			Datas = append(Datas, &types.Pair{sheetName, recores})
 		}
 
 		return nil

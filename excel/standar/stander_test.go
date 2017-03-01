@@ -9,7 +9,7 @@ import (
 	"fmt"
 )
 
-const TEST_FILE_NAME = "../../评分表.xlsx"
+const TEST_FILE_NAME = "../../评分标准.xlsx"
 
 func Test(t *testing.T) { TestingT(t) }
 
@@ -22,7 +22,7 @@ var _ = Suite(&MySuite{})
  */
 func (s *MySuite) TestTimeUnitTypePolicySucceed(c *C) {
 	processor := func(testStr string, wanted int) {
-		result, err := timeUnitTypePolicy(TEST_FILE_NAME, testStr)
+		result, err := timeUnitTypePolicy(TEST_FILE_NAME, testStr,0,0,0)
 		c.Assert(err, IsNil)
 		c.Assert(result, Equals, wanted)
 	}
@@ -40,7 +40,7 @@ func (s *MySuite) TestTimeUnitTypePolicySucceed(c *C) {
  */
 func (s *MySuite) TestTimeUnitTypePolicyFailed(c *C) {
 	processor := func(s string) {
-		_, err := timeUnitTypePolicy(TEST_FILE_NAME, s)
+		_, err := timeUnitTypePolicy(TEST_FILE_NAME, s,0,0,0)
 		c.Assert(err, NotNil)
 		var e error
 		c.Assert(err, Implements, &e)
@@ -69,7 +69,7 @@ func (s *MySuite) TestParseRowNameSucceed(c *C) {
 
 	testStr := "1\"30'2"
 	wanted := MILLIS_PER_MINUTE + MILLIS_PER_SECOND*30 + 2*100
-	result, err := policy(TEST_FILE_NAME, testStr)
+	result, err := policy(TEST_FILE_NAME, testStr,0,0,0)
 	c.Assert(err, IsNil)
 	c.Assert(result, Equals, wanted)
 
