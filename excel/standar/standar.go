@@ -118,7 +118,7 @@ func Read(fileName string) (f common.ReadSheetFunc, err error) {
 
 			rowName, err := c.String()
 			if err != nil {
-				return errors.NewWrapper(err, fmt.Sprintf("%s 读取表头的时候出错了 读到%s", fileName, rowName))
+				return errors.NewWrapper(err, fmt.Sprintf("%s 读取表头的时候出错了 读到%s 第%v个表第%v行%v列", fileName, rowName, sheetNum, rowName, cellNum))
 			}
 			name, sex, policy, sorting, err := parseRowName(fileName, rowName)
 			if err != nil {
@@ -133,16 +133,21 @@ func Read(fileName string) (f common.ReadSheetFunc, err error) {
 			if sport == nil {
 				cInt, err := c.Int()
 				if err != nil {
-					return errors.NewWrapper(err, fmt.Sprintf("%s 读取分值的时候出错了", fileName))
+					return errors.NewWrapper(err, fmt.Sprintf("%s 读取分值的时候出错了 第%v个表第%v行%v列", fileName, sheetNum, rowNum, cellNum))
 				}
 				score[realRowNum] = cInt * SCORT_DENOMINATOR
 				if realRowNum > 0 {
-					dscore[realRowNum-1] = score[realRowNum-1] - score[realRowNum]
+					d := score[realRowNum-1] - score[realRowNum]
+					if d <= 0 {
+						return errors.NewOnlyStr(fmt.Sprintf("%s 分值一定是降序排序的而且值不能重复 第%v个表第%v行%v列", fileName, sheetNum, rowNum, cellNum))
+					}
+					dscore[realRowNum-1] = d
+
 				}
 			} else {
 				cStr, err := c.String()
 				if err != nil {
-					return errors.NewWrapper(err, fmt.Sprintf("%s %s 读取数据的时候出错了", fileName, sport.UniqueKey))
+					return errors.NewWrapper(err, fmt.Sprintf("%s %s 读取数据的时候出错了 第%v个表第%v行%v列", fileName, sport.UniqueKey, sheetNum, rowNum, cellNum))
 				}
 
 				v, err := sport.Policy(fileName, cStr, sheetNum, rowNum, cellNum)
@@ -178,7 +183,7 @@ func Read(fileName string) (f common.ReadSheetFunc, err error) {
 						sortingStr = DESC_SORTING_STR
 					}
 					if dresule <= 0 {
-						return errors.NewOnlyStr(fmt.Sprintf("%s 第 %v 列所有的值必须是%s排序 问题出在第 %v 行", fileName, i, sortingStr, j))
+						return errors.NewOnlyStr(fmt.Sprintf("%s 第 %v 列所有的值必须是%s排序而且值不能重复 问题出在第 %v 行", fileName, i, sortingStr, j))
 
 					}
 					perSR := dscore[lastIndex] / dresule
