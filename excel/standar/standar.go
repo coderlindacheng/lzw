@@ -76,7 +76,11 @@ func (p *Sport) OutPut(fileName, s string, sheetNum, rowNum, cellNum int) (strin
 	return s, errors.NewOnlyStr(fmt.Sprintf("%s 第%v行第%v列 出现了一些奇怪的问题", fileName, rowNum, cellNum))
 }
 
-var Sports map[string]Sport = map[string]Sport{}
+var sports map[string]Sport = map[string]Sport{}
+
+func Sports() map[string]Sport {
+	return sports
+}
 
 /*
 	默认的单位解析策略
@@ -86,13 +90,12 @@ var Sports map[string]Sport = map[string]Sport{}
 	return :
 		int 解析后的值得
  */
-
 func Read(fileName string) (f common.ReadSheetFunc, err error) {
 	var realMaxRow int
 	var score []int
 	var dscore []int
 	var results [][]int
-	var sports []*Sport
+	var temeSports []*Sport
 	var maxCell int
 	f = func(sheetNum, rowNum, cellNum int, s *xlsx.Sheet, r *xlsx.Row, c *xlsx.Cell) error {
 		if sheetNum > 1 {
@@ -100,7 +103,7 @@ func Read(fileName string) (f common.ReadSheetFunc, err error) {
 		}
 
 		if rowNum == 0 {
-			if sports == nil {
+			if temeSports == nil {
 				maxRow := s.MaxRow
 				if maxRow < 3 {
 					err = errors.NewOnlyStr(fmt.Sprintf("%s 表至少要有3行 表头和2行数据,要不没法评分", fileName))
@@ -110,7 +113,7 @@ func Read(fileName string) (f common.ReadSheetFunc, err error) {
 				dscore = make([]int, realMaxRow-1)
 				maxCell = len(r.Cells)
 				results = make([][]int, maxCell)
-				sports = make([]*Sport, maxCell)
+				temeSports = make([]*Sport, maxCell)
 			}
 
 			rowName, err := c.String()
@@ -122,10 +125,10 @@ func Read(fileName string) (f common.ReadSheetFunc, err error) {
 				return err
 			}
 			if name != SCORE_ROW_NAME {
-				sports[cellNum] = &Sport{Name: name, Sex: sex, Policy: policy, ScoreTranslator: make([]TripleInt, realMaxRow), UniqueKey: name + POUND_SIGN + sex, sorting: sorting}
+				temeSports[cellNum] = &Sport{Name: name, Sex: sex, Policy: policy, ScoreTranslator: make([]TripleInt, realMaxRow), UniqueKey: name + POUND_SIGN + sex, sorting: sorting}
 			}
 		} else {
-			sport := sports[cellNum]
+			sport := temeSports[cellNum]
 			realRowNum := rowNum - 1
 			if sport == nil {
 				cInt, err := c.Int()
@@ -156,7 +159,7 @@ func Read(fileName string) (f common.ReadSheetFunc, err error) {
 		}
 
 		if rowNum == realMaxRow && cellNum+1 >= maxCell {
-			for i, sport := range sports {
+			for i, sport := range temeSports {
 				if sport == nil {
 					continue
 				}
@@ -181,7 +184,7 @@ func Read(fileName string) (f common.ReadSheetFunc, err error) {
 					perSR := dscore[lastIndex] / dresule
 					sport.ScoreTranslator[j] = TripleInt{score[j], result[j], perSR}
 				}
-				Sports[sport.UniqueKey] = *sport
+				sports[sport.UniqueKey] = *sport
 			}
 		}
 		return nil

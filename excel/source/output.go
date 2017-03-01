@@ -19,7 +19,7 @@ func Output(fileName string) error {
 	}
 
 	file := xlsx.NewFile()
-	for i, pair := range Datas {
+	for i, pair := range datasToOutput {
 		if pair != nil {
 			s, ok := pair.Left().(string)
 			if ok {

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/coderlindacheng/lzw/excel/standar"
 	"testing"
+	"github.com/coderlindacheng/balabalago/types"
 )
 
 const TEST_INPUT_FILE_NAME = "../../原始表.xlsx"
@@ -18,13 +19,20 @@ type TestSuite struct{}
 
 var _ = Suite(&TestSuite{})
 
-func (s *TestSuite) TestReadSheet(c *C) {
+func init() {
 	common.ReadSheet(TEST_STANDAR_FILE_NAME, standar.Read)
+}
+
+func (s *TestSuite) SetUpTest(c *C) {
+	datasToOutput = make([]*types.Pair, 0, 20) //要重新初始化一下,要不然测试会出问题
+}
+
+func (s *TestSuite) TestReadSheet(c *C) {
 	c.Assert(common.ReadSheet(TEST_INPUT_FILE_NAME, Read), IsNil)
-	if len(Datas) < 1 {
+	if len(datasToOutput) < 1 {
 		c.FailNow()
 	}
-	for _, v := range Datas {
+	for _, v := range datasToOutput {
 		if v == nil {
 			continue
 		}
@@ -33,7 +41,6 @@ func (s *TestSuite) TestReadSheet(c *C) {
 }
 
 func (s *TestSuite) TestOutputSheet(c *C) {
-	common.ReadSheet(TEST_STANDAR_FILE_NAME, standar.Read)
 	common.ReadSheet(TEST_INPUT_FILE_NAME, Read)
-	c.Assert(Output(TEST_OUTPUT_FILE_NAME),IsNil)
+	c.Assert(Output(TEST_OUTPUT_FILE_NAME), IsNil)
 }

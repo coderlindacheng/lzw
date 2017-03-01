@@ -89,10 +89,10 @@ func (s *MySuite) TestParseRowNameFailed(c *C) {
 
 func (s *MySuite) TestReadSheet(c *C) {
 	c.Assert(common.ReadSheet(TEST_FILE_NAME, Read), IsNil)
-	if len(Sports) < 1 {
+	if len(sports) < 1 {
 		c.FailNow()
 	}
-	for k, v := range Sports {
+	for k, v := range sports {
 		fmt.Println(k)
 		fmt.Println(v)
 	}

@@ -17,7 +17,11 @@ const (
 	SHEET_PREFIX    = "工作表"
 )
 
-var Datas []*types.Pair = make([]*types.Pair, 0, 20) //随便定义一个默认值
+var datasToOutput []*types.Pair = make([]*types.Pair, 0, 20) //随便定义一个默认值
+func DatasToOutput() []*types.Pair {
+	return datasToOutput
+}
+
 var sheetNameMap map[string]string = map[string]string{}
 
 func Read(fileName string) (f common.ReadSheetFunc, err error) {
@@ -69,7 +73,7 @@ func Read(fileName string) (f common.ReadSheetFunc, err error) {
 			}
 
 			key := rowName + special_string.POUND_SIGN + sex
-			sprot, ok := standar.Sports[key]
+			sprot, ok := standar.Sports()[key]
 			if ok {
 				outPutStr, err := sprot.OutPut(fileName, s, sheetNum, rowNum, cellNum)
 				if err != nil {
@@ -92,7 +96,7 @@ func Read(fileName string) (f common.ReadSheetFunc, err error) {
 				sheetName = SHEET_PREFIX + special_string.SPACE + strconv.Itoa(len(sheetNameMap))
 			}
 			sheetNameMap[sheetName] = sheetName
-			Datas = append(Datas, &types.Pair{sheetName, recores})
+			datasToOutput = append(datasToOutput, &types.Pair{sheetName, recores})
 		}
 
 		return nil
