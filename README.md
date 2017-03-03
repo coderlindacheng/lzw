@@ -9,7 +9,7 @@
 
 ## 先来一波下载连接
 
-    * [Windows版本]( https://github.com/coderlindacheng/lzw/raw/master/lzw.exe) 这个是64位版本 
+    * [Windows版本](https://github.com/coderlindacheng/lzw/raw/master/lzw.exe)这个是64位版本 
     * [Mac版本]( https://github.com/coderlindacheng/lzw/raw/master/lzw) 这个是64位版本
     * [Linux版本]( https://github.com/coderlindacheng/lzw/raw/master/lzw_linux64) 这个是64位版本
     * [评分标准.xlsx]( https://github.com/coderlindacheng/lzw/raw/master/%E8%AF%84%E5%88%86%E6%A0%87%E5%87%86.xlsx) 这个是样板
