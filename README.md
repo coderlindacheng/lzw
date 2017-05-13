@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/coderlindacheng/lzw.svg?branch=master)](https://travis-ci.org/coderlindacheng/lzw)
+
 # 先来个源码拉取的办法(行内人士用的)
 
     go get github.com/coderlindacheng/lzw
